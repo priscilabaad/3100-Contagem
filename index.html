@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ALX 3100">
+  <meta name="theme-color" content="#CC0000">
+  <link rel="manifest" id="manifest-placeholder">
+  <link rel="apple-touch-icon" id="apple-icon-placeholder">
+  <title>Contagem · ALX 3100</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --red:      #CC0000;
+      --red-d:    #990000;
+      --dark:     #1C1C1E;
+      --gray1:    #3A3A3C;
+      --gray2:    #636366;
+      --gray3:    #AEAEB2;
+      --gray4:    #D1D1D6;
+      --gray5:    #F2F2F7;
+      --white:    #FFFFFF;
+      --green:    #28A745;
+      --blue:     #007AFF;
+      --warn:     #FF9500;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;overflow:hidden;}
+    body{
+      font-family:'Barlow',system-ui,sans-serif;
+      background:var(--gray5);
+      color:var(--dark);
+      display:flex;flex-direction:column;
+      height:100dvh;
+    }
+
+    /* ── HEADER ─────────────────────────────── */
+    .hdr{
+      background:var(--red);
+      color:#fff;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 16px;
+      padding-top:max(12px,env(safe-area-inset-top));
+      flex-shrink:0;
+      box-shadow:0 2px 12px rgba(0,0,0,.25);
+    }
+    .hdr-logo{
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:800;font-size:21px;letter-spacing:.5px;
+    }
+    .hdr-sub{font-size:10px;opacity:.75;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;margin-top:1px;}
+    .hdr-badge{
+      background:rgba(255,255,255,.18);
+      border:1px solid rgba(255,255,255,.3);
+      font-family:'DM Mono',monospace;
+      font-size:12px;font-weight:500;
+      padding:5px 10px;border-radius:8px;
+      text-align:center;min-width:64px;
+    }
+
+    /* ── CONTENT ─────────────────────────────── */
+    .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    .panel{display:none;flex-direction:column;gap:12px;padding:14px 14px 24px;}
+    .panel.on{display:flex;}
+
+    /* ── CARD ─────────────────────────────────── */
+    .card{background:var(--white);border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+    .ctitle{
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:700;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;
+      color:var(--gray2);margin-bottom:12px;
+    }
+
+    /* ── INPUTS ──────────────────────────────── */
+    .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+    .fg:last-child{margin-bottom:0;}
+    .lbl{font-size:11px;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:.6px;}
+
+    input[type=text],input[type=number],textarea,select{
+      width:100%;padding:12px 14px;
+      border:1.5px solid var(--gray4);border-radius:10px;
+      font-family:'Barlow',sans-serif;font-size:16px;
+      color:var(--dark);background:var(--gray5);
+      -webkit-appearance:none;outline:none;
+      transition:border-color .15s,background .15s;
+    }
+    input:focus,textarea:focus{border-color:var(--red);background:#fff;}
+    input[readonly]{color:var(--gray2);background:var(--gray5);}
+    input[type=number]{font-family:'DM Mono',monospace;font-size:22px;text-align:center;}
+    textarea{font-size:13px;resize:none;font-family:'DM Mono',monospace;line-height:1.55;}
+
+    /* ── BUTTONS ─────────────────────────────── */
+    .btn{
+      width:100%;padding:14px;border:none;border-radius:12px;
+      font-family:'Barlow Condensed',sans-serif;
+      font-size:18px;font-weight:700;letter-spacing:.4px;
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:transform .1s,opacity .15s;
+    }
+    .btn:active{transform:scale(.97);}
+    .btn-red{background:var(--red);color:#fff;}
+    .btn-gray{background:var(--gray5);color:var(--dark);}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-danger{background:#FF3B30;color:#fff;}
+    .btn-outline{background:transparent;border:1.5px solid var(--gray4);color:var(--dark);}
+    .btn-sm{padding:9px 14px;font-size:14px;border-radius:9px;width:auto;flex-shrink:0;}
+    .row{display:flex;gap:10px;align-items:stretch;}
+    .row .btn{flex:1;}
+
+    /* ── SCANNER ─────────────────────────────── */
+    /* html5-qrcode container */
+    #scanWrap video{border-radius:10px;width:100%!important;}
+    #scanWrap img{display:none!important;}
+    #scanWrap>div:first-child{border-radius:10px;overflow:hidden;}
+    #html5-qrcode-button-camera-permission,
+    #html5-qrcode-button-camera-start,
+    #html5-qrcode-button-camera-stop,
+    #html5-qrcode-anchor-scan-type-change{ display:none!important; }
+    #html5qr-code-full-region{ border:none!important; padding:0!important; }
+    .scan-wrap{
+      background:#000;border-radius:12px;overflow:hidden;
+      aspect-ratio:4/3;width:100%;display:none;position:relative;
+    }
+    #video{width:100%;height:100%;object-fit:cover;display:block;}
+    .scan-overlay{
+      position:absolute;inset:0;display:flex;
+      align-items:center;justify-content:center;pointer-events:none;
+    }
+    .scan-box{
+      width:72%;height:32%;
+      border:2px solid rgba(255,255,255,.85);border-radius:10px;
+      box-shadow:0 0 0 9999px rgba(0,0,0,.42);
+      position:relative;overflow:hidden;
+    }
+    .scan-line{
+      position:absolute;left:0;right:0;height:2px;
+      background:var(--red);box-shadow:0 0 8px var(--red);
+      animation:sl 1.8s ease-in-out infinite;
+    }
+    @keyframes sl{0%{top:2%}50%{top:95%}100%{top:2%}}
+    .scan-ph{
+      background:var(--gray1);border-radius:12px;
+      aspect-ratio:4/3;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:10px;color:var(--gray3);
+    }
+    .scan-ph .ico{font-size:44px;}
+    .scan-ph p{font-size:13px;text-align:center;padding:0 24px;line-height:1.5;}
+
+    /* ── CODE DISPLAY ────────────────────────── */
+    .code-box{
+      font-family:'DM Mono',monospace;font-size:20px;font-weight:500;
+      letter-spacing:2.5px;background:var(--dark);color:#fff;
+      padding:13px 14px;border-radius:10px;text-align:center;min-height:52px;
+      word-break:break-all;
+    }
+    .desc-box{
+      font-size:15px;font-weight:500;color:var(--dark);
+      padding:12px 14px;background:var(--gray5);border-radius:10px;
+      border:1.5px solid var(--gray4);min-height:48px;line-height:1.4;
+    }
+    .ubadge{
+      display:inline-block;background:var(--red);color:#fff;
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:700;font-size:12px;
+      padding:2px 9px;border-radius:6px;letter-spacing:1px;margin-left:6px;
+    }
+
+    /* ── QTY ROW ─────────────────────────────── */
+    .qty-row{display:flex;gap:8px;align-items:center;}
+    .qty-btn{
+      width:50px;height:52px;flex-shrink:0;
+      border:1.5px solid var(--gray4);border-radius:10px;background:#fff;
+      font-size:26px;font-weight:300;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;color:var(--dark);
+    }
+    .qty-btn:active{background:var(--gray5);}
+    .qty-row input{flex:1;}
+
+    /* ── RECENT ──────────────────────────────── */
+    .rec-item{
+      display:flex;align-items:center;gap:10px;
+      padding:9px 0;border-bottom:1px solid var(--gray5);
+    }
+    .rec-item:last-child{border-bottom:none;}
+    .rec-left{flex:1;overflow:hidden;}
+    .rec-code{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray2);}
+    .rec-desc{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .rec-qty{
+      font-family:'Barlow Condensed',sans-serif;font-weight:700;
+      font-size:22px;color:var(--red);white-space:nowrap;
+      text-align:right;min-width:48px;
+    }
+    .rec-unit{font-size:11px;font-weight:400;color:var(--gray3);}
+
+    /* ── STATS GRID ──────────────────────────── */
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .sbox{background:var(--white);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+    .sval{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:32px;color:var(--red);}
+    .slbl{font-size:10px;color:var(--gray2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+
+    /* ── LIST TABLE ──────────────────────────── */
+    .ltable{width:100%;border-collapse:collapse;}
+    .ltable th{
+      font-family:'Barlow Condensed',sans-serif;font-weight:700;
+      font-size:10px;letter-spacing:1px;text-transform:uppercase;
+      color:var(--gray2);text-align:left;
+      padding:8px 6px;border-bottom:2px solid var(--gray4);
+    }
+    .ltable td{padding:9px 6px;font-size:13px;border-bottom:1px solid var(--gray5);vertical-align:middle;}
+    .ltable tr:last-child td{border-bottom:none;}
+    .td-code{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray2);}
+    .td-desc{font-weight:500;}
+    .td-qty{
+      font-family:'Barlow Condensed',sans-serif;font-weight:700;
+      font-size:22px;color:var(--red);text-align:right;white-space:nowrap;
+    }
+    .td-unit{font-size:11px;font-weight:400;color:var(--gray3);}
+    .del-btn{background:none;border:none;font-size:16px;cursor:pointer;padding:4px 6px;color:var(--gray3);}
+    .del-btn:active{color:#FF3B30;}
+
+    /* ── SEARCH ──────────────────────────────── */
+    .srch{position:relative;margin-bottom:12px;}
+    .srch input{padding-left:40px;}
+    .srch-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:17px;pointer-events:none;}
+
+    /* ── DB STATUS ───────────────────────────── */
+    .dbst{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--gray5);border-radius:10px;}
+    .dbdot{width:10px;height:10px;border-radius:50%;background:var(--gray3);flex-shrink:0;transition:background .3s;}
+    .dbdot.ok{background:var(--green);}
+    .dbst-text{font-size:13px;font-weight:500;}
+    .dbst-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray2);margin-top:2px;}
+
+    /* ── PROGRESS ────────────────────────────── */
+    .prog{height:5px;background:var(--gray4);border-radius:3px;overflow:hidden;margin-top:8px;display:none;}
+    .prog-bar{height:100%;background:var(--green);border-radius:3px;width:0%;transition:width .2s;}
+
+    /* ── COL MAPPING ─────────────────────────── */
+    .colmap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+    .col-lbl{font-size:10px;font-weight:700;color:var(--gray2);text-align:center;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+    .col-inp{text-align:center;font-family:'DM Mono',monospace;font-size:22px;padding:10px 6px;}
+
+    /* ── TABBAR ──────────────────────────────── */
+    .tabbar{
+      background:var(--white);
+      border-top:1px solid var(--gray4);
+      display:flex;flex-shrink:0;
+      padding-bottom:max(6px,env(safe-area-inset-bottom));
+    }
+    .tbtn{
+      flex:1;padding:8px 4px 4px;border:none;background:none;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+      color:var(--gray3);font-family:'Barlow',sans-serif;
+      font-size:10px;font-weight:600;letter-spacing:.3px;transition:color .15s;
+    }
+    .tbtn.on{color:var(--red);}
+    .tbtn-ico{font-size:22px;line-height:1;}
+
+    /* ── TOAST ───────────────────────────────── */
+    .toast{
+      position:fixed;bottom:76px;left:50%;
+      transform:translateX(-50%) translateY(16px);
+      background:var(--dark);color:#fff;
+      padding:11px 20px;border-radius:24px;
+      font-size:14px;font-weight:600;
+      opacity:0;transition:opacity .2s,transform .2s;
+      z-index:999;white-space:nowrap;pointer-events:none;max-width:90vw;
+      text-overflow:ellipsis;overflow:hidden;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .toast.ok{background:var(--green);}
+    .toast.err{background:#FF3B30;}
+    .toast.info{background:var(--blue);}
+
+    /* ── MODAL ───────────────────────────────── */
+    .mbk{
+      position:fixed;inset:0;background:rgba(0,0,0,.5);
+      z-index:900;display:none;align-items:flex-end;
+    }
+    .mbk.open{display:flex;}
+    .mdl{
+      background:#fff;border-radius:20px 20px 0 0;
+      padding:20px 16px;
+      padding-bottom:max(20px,env(safe-area-inset-bottom));
+      width:100%;
+    }
+    .mdl-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;margin-bottom:8px;}
+    .mdl-body{color:var(--gray2);font-size:14px;margin-bottom:16px;line-height:1.6;white-space:pre-wrap;}
+    .mdl-acts{display:flex;gap:10px;}
+    .mdl-acts .btn{flex:1;}
+
+    /* ── EMPTY ───────────────────────────────── */
+    .empty{text-align:center;padding:36px 20px;color:var(--gray3);}
+    .empty .ico{font-size:44px;margin-bottom:10px;}
+    .empty p{font-size:13px;line-height:1.5;}
+
+    /* ── WARN BOX ────────────────────────────── */
+    .warnbox{background:#FFF8E1;border:1px solid #FFD54F;border-radius:10px;padding:12px 14px;font-size:13px;color:#7D5F00;line-height:1.6;}
+
+    /* ── EXPORT INFO ─────────────────────────── */
+    .expinfo{font-size:13px;color:var(--gray2);line-height:2;}
+    .expinfo b{color:var(--dark);}
+  </style>
+</head>
+<body>
+
+<!-- ───── HEADER ───── -->
+<header class="hdr">
+  <div>
+    <div class="hdr-logo">ALX 3100 · Contagem</div>
+    <div class="hdr-sub">Coca-Cola FEMSA · Almoxarifado</div>
+  </div>
+  <div class="hdr-badge" id="hdrBadge">0 itens</div>
+</header>
+
+<!-- ───── INSTALL BANNERS ───── -->
+<!-- Android Chrome -->
+<div id="installBanner" style="display:none;background:#1C1C1E;color:#fff;padding:12px 16px;align-items:center;gap:10px;flex-shrink:0;">
+  <span style="font-size:20px;">📲</span>
+  <span style="flex:1;font-size:13px;font-weight:500;">Instalar app no celular para usar offline</span>
+  <button onclick="installApp()" style="background:#CC0000;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.3px;">Instalar</button>
+  <button onclick="dismissBanner('installBanner')" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+</div>
+<!-- iOS Safari -->
+<div id="iosBanner" style="display:none;background:#1C1C1E;color:#fff;padding:12px 16px;align-items:center;gap:10px;flex-shrink:0;">
+  <span style="font-size:20px;">📲</span>
+  <span style="flex:1;font-size:13px;font-weight:500;line-height:1.4;">Para instalar: toque em <b>⎋ Compartilhar</b> → <b>"Adicionar à Tela de Início"</b></span>
+  <button onclick="dismissBanner('iosBanner')" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+</div>
+
+<!-- ───── CONTENT ───── -->
+<div class="content">
+
+  <!-- ═══ IMPORTAR ═══════════════════════════ -->
+  <div class="panel on" id="tab-importar">
+
+    <div class="card">
+      <div class="ctitle">📋 Banco de materiais SAP</div>
+      <div class="dbst">
+        <div class="dbdot" id="dbDot"></div>
+        <div>
+          <div class="dbst-text" id="dbText">Nenhum material importado</div>
+          <div class="dbst-sub" id="dbSub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">⚙️ Colunas do Excel (nº da coluna)</div>
+      <p style="font-size:12px;color:var(--gray2);margin-bottom:10px;">Informe qual número de coluna está cada dado (começa em 1):</p>
+      <div class="colmap">
+        <div>
+          <div class="col-lbl">Código SAP</div>
+          <input type="number" class="col-inp" id="colCode" value="1" min="1" max="30">
+        </div>
+        <div>
+          <div class="col-lbl">Descrição</div>
+          <input type="number" class="col-inp" id="colDesc" value="2" min="1" max="30">
+        </div>
+        <div>
+          <div class="col-lbl">Unidade</div>
+          <input type="number" class="col-inp" id="colUnit" value="3" min="0" max="30" title="0 = sem unidade">
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--gray3);margin-top:8px;">* Coluna Unidade: coloque 0 se não existir</p>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">📥 Colar dados do Excel</div>
+      <div class="fg">
+        <textarea id="pasteArea" rows="8"
+          placeholder="No Excel: selecione as colunas código + descrição + unidade e cole aqui (Ctrl+V / Cmd+V)&#10;&#10;Exemplo:&#10;10000001&#9;PARAFUSO M6X10 INOX&#9;PC&#10;10000002&#9;PORCA SEXTAVADA M6&#9;PC&#10;20000055&#9;LUVA DE BORRACHA PAR&#9;PR"></textarea>
+      </div>
+      <div class="prog" id="prog"><div class="prog-bar" id="progBar"></div></div>
+      <div id="importPreview" style="display:none;margin-top:10px;overflow-x:auto;"></div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-gray" onclick="previsualizarImport()" style="flex:0;padding:14px 16px;font-size:15px;">🔍 Visualizar</button>
+        <button class="btn btn-red" onclick="importar()">📥 Importar</button>
+        <button class="btn btn-danger btn-sm" onclick="limparDB()">🗑</button>
+      </div>
+    </div>
+
+    <!-- GITHUB JSON CARD (shown after import or if source=local) -->
+    <div class="card" id="jsonCard" style="display:none; border:2px solid #0d6efd22; background:#f0f7ff;">
+      <div class="ctitle" style="color:#0552b5;">☁️ Salvar no GitHub (uma vez só)</div>
+      <div style="font-size:13px;color:var(--gray2);margin-bottom:12px;line-height:1.7;">
+        Para o banco aparecer <b>automaticamente em qualquer aparelho</b>, faça isso uma vez:
+        <br><br>
+        <b style="color:var(--dark);">1.</b> Clique em "Baixar materiais.json" abaixo<br>
+        <b style="color:var(--dark);">2.</b> Vá no GitHub → repositório <b>estoque-3100</b><br>
+        <b style="color:var(--dark);">3.</b> Clique em <b>Add file → Upload files</b><br>
+        <b style="color:var(--dark);">4.</b> Selecione o arquivo <b>materiais.json</b> e faça commit<br>
+        <b style="color:var(--dark);">5.</b> Pronto! Todo celular que abrir o app já carrega automático ☁️
+      </div>
+      <div class="row">
+        <button class="btn btn-red" onclick="downloadJSON()">📁 Baixar materiais.json</button>
+        <button class="btn btn-gray btn-sm" onclick="carregarGitHub(true)" title="Verificar se já está no GitHub">🔄</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">💡 Como usar</div>
+      <div style="font-size:13px;color:var(--gray2);line-height:1.9;">
+        <b style="color:var(--dark);">1.</b> No SAP, exporte MB52 (ou qualquer relatório com código + descrição) para Excel<br>
+        <b style="color:var(--dark);">2.</b> Abra o arquivo, selecione as colunas certas e copie (<b>Ctrl+C</b>)<br>
+        <b style="color:var(--dark);">3.</b> Cole aqui e clique em <b>Importar</b><br>
+        <b style="color:var(--dark);">4.</b> Baixe o <b>materiais.json</b> e suba no GitHub — qualquer aparelho carrega automático ☁️<br>
+        <b style="color:var(--dark);">5.</b> Vá para <b>Contar</b> e comece a escanear!<br>
+        <b style="color:var(--dark);">6.</b> Ao terminar, exporte para Excel pela aba <b>Exportar</b>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ CONTAR ══════════════════════════════ -->
+  <div class="panel" id="tab-contar">
+
+    <div class="card">
+      <div class="scan-ph" id="scanPh">
+        <div class="ico">📷</div>
+        <p>Toque em "Iniciar câmera" para escanear.<br>Ou digite o código manualmente abaixo.</p>
+      </div>
+      <!-- html5-qrcode injeta o vídeo aqui -->
+      <div id="scanWrap" style="display:none; border-radius:12px; overflow:hidden;"></div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-gray" id="camBtn" onclick="toggleCam()">📷 Iniciar câmera</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="fg">
+        <div class="lbl">Código SAP / Código de barras</div>
+        <input type="text" id="codeIn"
+          placeholder="Escaneie ou digite aqui…"
+          inputmode="numeric"
+          style="font-family:'DM Mono',monospace;letter-spacing:2px;font-size:18px;"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+
+      <div class="fg">
+        <div class="lbl">Descrição <span id="ubadge" class="ubadge" style="display:none;"></span></div>
+        <div class="desc-box" id="descBox" style="color:var(--gray3);">—</div>
+      </div>
+
+      <div class="fg">
+        <div class="lbl">Quantidade</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="adj(-1)">−</button>
+          <input type="number" id="qtyIn" value="1" min="0.001" step="1">
+          <button class="qty-btn" onclick="adj(1)">+</button>
+        </div>
+      </div>
+
+      <button class="btn btn-green" onclick="addItem()" style="margin-top:4px;">✅ Adicionar</button>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">⏱ Últimas adições</div>
+      <div id="recList"><div class="empty"><div class="ico">📦</div><p>Nenhum item ainda</p></div></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ LISTA ═══════════════════════════════ -->
+  <div class="panel" id="tab-lista">
+
+    <div class="stats">
+      <div class="sbox"><div class="sval" id="stCod">0</div><div class="slbl">Códigos</div></div>
+      <div class="sbox"><div class="sval" id="stTot">0</div><div class="slbl">Qtd Total</div></div>
+    </div>
+
+    <div class="card" style="padding-bottom:0;">
+      <div class="srch">
+        <span class="srch-ico">🔍</span>
+        <input type="text" id="srchIn" placeholder="Buscar código ou descrição…" oninput="renderList()">
+      </div>
+      <div id="listBox">
+        <div class="empty"><div class="ico">📋</div><p>Nenhum item contado ainda.<br>Vá para "Contar" para começar.</p></div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger" onclick="clearAll()">🗑️ Limpar toda a contagem</button>
+
+  </div>
+
+  <!-- ═══ EXPORTAR ════════════════════════════ -->
+  <div class="panel" id="tab-exportar">
+
+    <div class="stats">
+      <div class="sbox"><div class="sval" id="expCod">0</div><div class="slbl">Códigos</div></div>
+      <div class="sbox"><div class="sval" id="expTot">0</div><div class="slbl">Qtd Total</div></div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">📤 Exportar contagem</div>
+      <div class="fg">
+        <div class="lbl">Nome do arquivo</div>
+        <input type="text" id="fnIn" value="Contagem_3100">
+      </div>
+      <div class="fg">
+        <div class="lbl">Depósito / Referência</div>
+        <input type="text" id="depIn" value="ALX 3100" placeholder="Ex: Mezzanino, Prateleira A…">
+      </div>
+      <button class="btn btn-green" onclick="exportar()" style="margin-top:6px;">📊 Exportar Excel (.xlsx)</button>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">📋 Formato da exportação</div>
+      <div class="expinfo">
+        <b>Colunas:</b> Código SAP · Descrição · Unidade · Quantidade · Depósito · Data/Hora<br>
+        <b>Ordenação:</b> Por código SAP (crescente)<br>
+        <b>Planilhas:</b> "Contagem 3100" + "Resumo"<br>
+        <b>Arquivo:</b> nome_DDMMAAAA_HHMM.xlsx
+      </div>
+    </div>
+
+    <div class="warnbox">
+      ⚠️ <b>Atenção:</b> A contagem fica salva no aparelho mesmo fechando o app. Exporte antes de limpar.
+    </div>
+
+  </div>
+
+</div><!-- /content -->
+
+<!-- ───── TABBAR ───── -->
+<nav class="tabbar">
+  <button class="tbtn on" id="tb-importar" onclick="showTab('importar')"><span class="tbtn-ico">📥</span>Importar</button>
+  <button class="tbtn"    id="tb-contar"   onclick="showTab('contar')"  ><span class="tbtn-ico">📷</span>Contar</button>
+  <button class="tbtn"    id="tb-lista"    onclick="showTab('lista')"   ><span class="tbtn-ico">📋</span>Lista</button>
+  <button class="tbtn"    id="tb-exportar" onclick="showTab('exportar')"><span class="tbtn-ico">📊</span>Exportar</button>
+</nav>
+
+<!-- ───── TOAST ───── -->
+<div class="toast" id="toast"></div>
+
+<!-- ───── MODAL ───── -->
+<div class="mbk" id="mbk">
+  <div class="mdl">
+    <div class="mdl-title" id="mdlTitle"></div>
+    <div class="mdl-body"  id="mdlBody" ></div>
+    <div class="mdl-acts"  id="mdlActs" ></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+let db    = {};   // { normalizedCode: { d, u } }
+let items = [];   // [{ id, code, desc, unit, qty, ts }]
+let scanning    = false;
+let scanCooldown= false;
+let codeReader  = null;
+let audioCtx    = null;
+let dbRealCount = 0;
+let dbSource    = 'none'; // 'none' | 'github' | 'local'
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+async function init(){
+  // Load contagem first (always local)
+  try { const s = localStorage.getItem('alx3100_items'); if(s){ items = JSON.parse(s); } } catch(e){}
+  refreshBadge(); refreshStats();
+
+  // Try GitHub materiais.json first
+  const ghOk = await carregarGitHub(false);
+  if(!ghOk){
+    // Fall back to localStorage
+    try { const s = localStorage.getItem('alx3100_db'); if(s){ db = JSON.parse(s); } } catch(e){}
+    try { dbRealCount = parseInt(localStorage.getItem('alx3100_dbcount')||'0'); } catch(e){}
+    try { dbSource = localStorage.getItem('alx3100_dbsource')||'none'; } catch(e){}
+    refreshDB();
+  }
+}
+init().catch(e => console.error('Init error:', e));
+
+/* ════════════════════════════════════════════
+   TABS
+════════════════════════════════════════════ */
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+name).classList.add('on');
+  document.getElementById('tb-'+name).classList.add('on');
+  if(name!=='contar'&&scanning) stopCam();
+  if(name==='lista')    renderList();
+  if(name==='exportar') refreshExport();
+}
+
+/* ════════════════════════════════════════════
+   IMPORT
+════════════════════════════════════════════ */
+
+/* Auto-detecta separador: tab, ponto-e-vírgula ou vírgula */
+function detectSep(lines){
+  const sample = lines.slice(0,5).join('\n');
+  const tabs  = (sample.match(/\t/g)||[]).length;
+  const semis = (sample.match(/;/g)||[]).length;
+  const commas= (sample.match(/,/g)||[]).length;
+  if(tabs>=semis && tabs>=commas) return '\t';
+  if(semis>=commas) return ';';
+  return ',';
+}
+
+/* Split respeitando campos entre aspas */
+function smartSplit(line, sep){
+  const result=[], s=sep||'\t';
+  let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+    else if(c===s&&!inQ){ result.push(cur.trim()); cur=''; }
+    else cur+=c;
+  }
+  result.push(cur.trim());
+  return result.map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+}
+
+/* Normaliza código SAP — lida com notação científica do Excel */
+function normCode(raw){
+  let s = String(raw).replace(/\s/g,'').replace(/,/g,'.');
+  // Notação científica: 1.23456E+07 → 12345600
+  if(/e[+\-]/i.test(s)){
+    try{ s = String(Math.round(parseFloat(s))); }catch(e){}
+  }
+  // Remove .0 final que Excel às vezes bota
+  s = s.replace(/\.0+$/,'');
+  // Se só dígitos: remove zeros à esquerda e padeia p/ 8
+  if(/^\d+$/.test(s)) return s.replace(/^0+/,'').padStart(8,'0');
+  return s;
+}
+
+let _sep = '\t'; // separador detectado
+
+function previsualizarImport(){
+  const txt = document.getElementById('pasteArea').value.trim();
+  const prevEl = document.getElementById('importPreview');
+  if(!txt){ prevEl.style.display='none'; toast('Cole os dados primeiro','err'); return; }
+
+  const lines = txt.split(/\r?\n/).filter(l=>l.trim());
+  _sep = detectSep(lines);
+
+  const cC = parseInt(document.getElementById('colCode').value)-1;
+  const cD = parseInt(document.getElementById('colDesc').value)-1;
+  const cUr= parseInt(document.getElementById('colUnit').value);
+  const cU = cUr>0 ? cUr-1 : -1;
+
+  const rows = lines.slice(0,6).map(l=>smartSplit(l,_sep));
+  const maxCols = Math.max(...rows.map(r=>r.length));
+
+  let html = `<div style="font-size:11px;color:var(--gray2);margin-bottom:6px;">
+    Separador detectado: <b>${_sep==='\t'?'TAB':_sep}</b> · ${lines.length} linhas · ${maxCols} colunas
+  </div>`;
+
+  html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <thead><tr style="background:var(--gray5);">`;
+  for(let c=0;c<Math.min(maxCols,8);c++){
+    const mark = c===cC?'🔑 Cód':c===cD?'📝 Desc':c===cU?'📦 Un':'';
+    html += `<th style="padding:4px 6px;border:1px solid var(--gray4);font-weight:700;color:${mark?'var(--red)':'var(--gray2)'};">${mark||'Col '+(c+1)}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  rows.forEach((cols,ri)=>{
+    const code = cols[cC]?normCode(cols[cC]):'—';
+    const desc = cols[cD]||'—';
+    const rowStyle = ri===0&&!/^\d/.test(cols[cC]||'')?'background:#FFF3CD;':'';
+    html += `<tr style="${rowStyle}">`;
+    for(let c=0;c<Math.min(maxCols,8);c++){
+      const val = c===cC ? `<b style="font-family:'DM Mono',monospace">${code}</b>` : (cols[c]||'');
+      html += `<td style="padding:4px 6px;border:1px solid var(--gray4);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val}</td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // Aviso de linha de cabeçalho
+  const firstCode = rows[0]?.[cC]||'';
+  if(firstCode && !/^\d/.test(firstCode.replace(/^0+/,''))){
+    html += `<div style="margin-top:8px;padding:8px 10px;background:#FFF3CD;border-radius:8px;font-size:12px;color:#7D5F00;">
+      ⚠️ A 1ª linha parece ser um <b>cabeçalho</b> (não começa com número). Ela será ignorada automaticamente.
+    </div>`;
+  }
+
+  prevEl.innerHTML = html;
+  prevEl.style.display = 'block';
+}
+
+function importar(){
+  const txt = document.getElementById('pasteArea').value.trim();
+  if(!txt){ toast('Cole os dados do Excel primeiro','err'); return; }
+
+  const lines = txt.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length){ toast('Nenhuma linha encontrada','err'); return; }
+
+  // Re-detecta separador se preview não foi chamado
+  if(!_sep) _sep = detectSep(lines);
+
+  const cC = parseInt(document.getElementById('colCode').value)-1;
+  const cD = parseInt(document.getElementById('colDesc').value)-1;
+  const cUr= parseInt(document.getElementById('colUnit').value);
+  const cU = cUr>0 ? cUr-1 : -1;
+
+  const prog = document.getElementById('prog');
+  const bar  = document.getElementById('progBar');
+  prog.style.display='block'; bar.style.width='0%';
+
+  const newDb = {};
+  let ok=0, skip=0;
+  let i=0;
+  const CHUNK=400;
+
+  function processChunk(){
+    const end=Math.min(i+CHUNK,lines.length);
+    for(;i<end;i++){
+      const cols    = smartSplit(lines[i], _sep);
+      const rawCode = (cols[cC]||'').trim();
+      const rawDesc = (cols[cD]||'').trim();
+      if(!rawCode||!rawDesc){ skip++; continue; }
+      const code = normCode(rawCode);
+      // Pula linhas de cabeçalho (código não é numérico)
+      if(i===0 && !/^\d/.test(code.replace(/^0+/,''))){ skip++; continue; }
+      if(!code||code==='00000000'){ skip++; continue; }
+      const unit = cU>=0&&cols[cU] ? cols[cU].trim() : '';
+      newDb[code] = { d: rawDesc, u: unit };
+      ok++;
+    }
+    bar.style.width = Math.round(i/lines.length*100)+'%';
+    if(i<lines.length){ setTimeout(processChunk,0); return; }
+
+    // Concluído
+    if(ok===0){
+      prog.style.display='none';
+      toast(`⚠️ Nenhum material importado — verifique as colunas e clique em Visualizar`,'err');
+      return;
+    }
+    db = newDb;
+    dbRealCount = ok;
+    dbSource = 'local';
+    try{
+      localStorage.setItem('alx3100_db', JSON.stringify(db));
+      localStorage.setItem('alx3100_dbcount', String(ok));
+      localStorage.setItem('alx3100_dbsource','local');
+    }catch(e){
+      toast('⚠️ Armazenamento cheio — tente importar menos linhas','err');
+    }
+    prog.style.display='none';
+    document.getElementById('pasteArea').value='';
+    document.getElementById('importPreview').style.display='none';
+    refreshDB();
+    document.getElementById('jsonCard').style.display='block';
+    toast(`✅ ${ok.toLocaleString('pt-BR')} materiais importados! (${skip} ignorados)`,'ok');
+  }
+  setTimeout(processChunk,50);
+}
+
+function limparDB(){
+  modal('Limpar banco de materiais?',
+    'Remove todos os materiais importados.\nA contagem NÃO é afetada.',
+    [{label:'Cancelar',cls:'btn-gray',fn:closeModal},
+     {label:'🗑 Limpar',cls:'btn-danger',fn:()=>{
+       db={}; dbRealCount=0; dbSource='none';
+       localStorage.removeItem('alx3100_db');
+       localStorage.removeItem('alx3100_dbcount');
+       localStorage.removeItem('alx3100_dbsource');
+       refreshDB(); closeModal();
+       toast('Banco limpo','info');
+     }}]);
+}
+
+/* Fetch materiais.json from GitHub Pages repo */
+async function carregarGitHub(manual){
+  if(manual){ toast('🔄 Buscando no GitHub…','info'); }
+  try{
+    const r = await fetch('./materiais.json?v='+Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error('Arquivo não encontrado ('+r.status+')');
+    const data = await r.json();
+    db = data.db || data;
+    dbRealCount = data.count || Object.keys(db).length;
+    dbSource = 'github';
+    localStorage.setItem('alx3100_db', JSON.stringify(db));
+    localStorage.setItem('alx3100_dbcount', String(dbRealCount));
+    localStorage.setItem('alx3100_dbsource','github');
+    refreshDB();
+    if(manual) toast(`✅ ${dbRealCount.toLocaleString('pt-BR')} materiais do GitHub!`,'ok');
+    return true;
+  }catch(e){
+    if(manual) toast('❌ '+e.message,'err');
+    return false;
+  }
+}
+
+/* Download db as materiais.json to upload to GitHub */
+function downloadJSON(){
+  if(!dbRealCount){ toast('Importe os materiais primeiro','err'); return; }
+  const payload = JSON.stringify({ db, count:dbRealCount, exportedAt:new Date().toISOString() });
+  const blob = new Blob([payload],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='materiais.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('📁 materiais.json baixado!','ok');
+}
+
+function refreshDB(){
+  const n = dbRealCount;
+  const dot  = document.getElementById('dbDot');
+  const text = document.getElementById('dbText');
+  const sub  = document.getElementById('dbSub');
+  if(n>0){
+    dot.classList.add('ok');
+    text.textContent = n.toLocaleString('pt-BR')+' materiais carregados';
+    if(dbSource==='github')
+      sub.textContent = '☁️ Carregado do GitHub automaticamente';
+    else
+      sub.textContent = '💾 Carregado do armazenamento local';
+    // show json card if local (needs to be uploaded)
+    if(dbSource==='local') document.getElementById('jsonCard').style.display='block';
+  } else {
+    dot.classList.remove('ok');
+    text.textContent = 'Nenhum material importado';
+    sub.textContent  = '';
+  }
+}
+
+/* ════════════════════════════════════════════
+   CAMERA (html5-qrcode — iOS Safari + Android)
+════════════════════════════════════════════ */
+async function toggleCam(){
+  scanning ? stopCam() : await startCam();
+}
+
+async function startCam(){
+  const btn=document.getElementById('camBtn');
+  btn.textContent='⏳ Aguarde…'; btn.disabled=true;
+  try{
+    if(!window.Html5Qrcode) throw new Error('Biblioteca não carregada. Verifique a conexão.');
+
+    if(!codeReader) codeReader = new Html5Qrcode('scanWrap');
+
+    document.getElementById('scanPh').style.display='none';
+    document.getElementById('scanWrap').style.display='block';
+
+    await codeReader.start(
+      { facingMode: 'environment' },
+      { fps: 12, qrbox: { width: 280, height: 120 }, aspectRatio: 1.5,
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.QR_CODE,
+        ]
+      },
+      (text) => {
+        if(!scanCooldown) onScan(text);
+      },
+      () => {} // erros de frame são normais, ignorar
+    );
+
+    scanning=true;
+    btn.textContent='⏹ Parar câmera';
+    btn.className='btn btn-gray';
+    btn.disabled=false;
+  }catch(e){
+    console.error(e);
+    document.getElementById('scanPh').style.display='flex';
+    document.getElementById('scanWrap').style.display='none';
+    btn.textContent='📷 Iniciar câmera'; btn.disabled=false; scanning=false;
+    if(codeReader){ try{ await codeReader.stop(); }catch(_){} codeReader=null; }
+    const msg = e.name==='NotAllowedError'
+      ? 'Permissão de câmera negada. Habilite nas configurações do Safari.'
+      : 'Erro ao iniciar câmera: '+e.message;
+    toast(msg,'err');
+  }
+}
+
+async function stopCam(){
+  try{ if(codeReader){ await codeReader.stop(); codeReader=null; } }catch(e){}
+  scanning=false;
+  document.getElementById('scanPh').style.display='flex';
+  document.getElementById('scanWrap').style.display='none';
+  const btn=document.getElementById('camBtn');
+  btn.textContent='📷 Iniciar câmera'; btn.className='btn btn-gray'; btn.disabled=false;
+}
+
+function onScan(raw){
+  scanCooldown=true;
+  setTimeout(()=>scanCooldown=false,1600);
+  beep(); vibrate();
+  const code=normCode(raw);
+  document.getElementById('codeIn').value=code;
+  lookup(code);
+  setTimeout(()=>{ const q=document.getElementById('qtyIn'); q.focus(); q.select(); },120);
+}
+
+/* ════════════════════════════════════════════
+   LOOKUP
+════════════════════════════════════════════ */
+
+function lookup(code){
+  if(code===undefined||code===null) code=normCode(document.getElementById('codeIn').value.trim());
+  const descEl=document.getElementById('descBox');
+  const ubEl  =document.getElementById('ubadge');
+  if(!code){ descEl.textContent='—'; descEl.style.color='var(--gray3)'; ubEl.style.display='none'; return; }
+
+  const mat=db[code]
+    ||db[code.replace(/^0+/,'')]
+    ||db[String(parseInt(code)||code).padStart(8,'0')]
+    ||null;
+
+  if(mat){
+    descEl.textContent=mat.d; descEl.style.color='var(--dark)';
+    if(mat.u){ ubEl.textContent=mat.u; ubEl.style.display='inline-block'; }
+    else ubEl.style.display='none';
+  } else {
+    const noDb=Object.keys(db).length===0;
+    descEl.textContent=noDb?'Importe o banco de materiais primeiro':'Código não encontrado';
+    descEl.style.color='var(--gray3)'; ubEl.style.display='none';
+  }
+}
+
+/* ════════════════════════════════════════════
+   ADD ITEM
+════════════════════════════════════════════ */
+function addItem(){
+  const rawCode=document.getElementById('codeIn').value.trim();
+  const qty=parseFloat(document.getElementById('qtyIn').value);
+  if(!rawCode){ toast('Digite ou escaneie um código','err'); return; }
+  if(!qty||qty<=0){ toast('Quantidade deve ser maior que zero','err'); return; }
+
+  const code=normCode(rawCode);
+  const mat=db[code]||db[code.replace(/^0+/,'')]||null;
+  const desc=mat?mat.d:(document.getElementById('descBox').style.color==='var(--dark)'?document.getElementById('descBox').textContent:'');
+  const unit=mat?mat.u||'':'';
+
+  const ex=items.find(i=>i.code===code);
+  if(ex){
+    modal('Código já contado',
+      `${code}\n${ex.desc||'(sem descrição)'}\n\nAtual: ${ex.qty} ${ex.unit}\nNovo: ${qty} ${unit}\nTotal: ${ex.qty+qty} ${unit}`,
+      [{label:'Cancelar',cls:'btn-gray',fn:closeModal},
+       {label:'Nova linha',cls:'btn-outline',fn:()=>{ doAdd(code,desc,unit,qty); closeModal(); }},
+       {label:`Somar → ${ex.qty+qty} ${unit}`,cls:'btn-red',fn:()=>{
+         ex.qty+=qty; ex.ts=new Date().toISOString();
+         saveItems(); refreshAll(); closeModal();
+         toast(`✅ Somado – total: ${ex.qty} ${unit}`,'ok'); clearForm();
+       }}]);
+    return;
+  }
+  doAdd(code,desc,unit,qty);
+}
+
+function doAdd(code,desc,unit,qty){
+  items.unshift({ id:Date.now()+Math.random(), code, desc:desc||'', unit:unit||'', qty, ts:new Date().toISOString() });
+  saveItems(); refreshAll();
+  toast(`✅ ${code} · ${qty} ${unit}`,'ok'); clearForm();
+}
+
+function clearForm(){
+  document.getElementById('codeIn').value='';
+  document.getElementById('qtyIn').value='1';
+  document.getElementById('descBox').textContent='—';
+  document.getElementById('descBox').style.color='var(--gray3)';
+  document.getElementById('ubadge').style.display='none';
+  document.getElementById('codeIn').focus();
+}
+
+function adj(d){
+  const el=document.getElementById('qtyIn');
+  el.value=Math.max(1,((parseFloat(el.value)||0)+d));
+}
+
+/* ════════════════════════════════════════════
+   RECENT
+════════════════════════════════════════════ */
+function renderRecent(){
+  const c=document.getElementById('recList');
+  const r=items.slice(0,8);
+  if(!r.length){ c.innerHTML='<div class="empty"><div class="ico">📦</div><p>Nenhum item ainda</p></div>'; return; }
+  c.innerHTML=r.map(i=>`
+    <div class="rec-item">
+      <div class="rec-left">
+        <div class="rec-code">${i.code}</div>
+        <div class="rec-desc">${i.desc||'—'}</div>
+      </div>
+      <div class="rec-qty">${fmt(i.qty)}<span class="rec-unit"> ${i.unit}</span></div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════════
+   LIST
+════════════════════════════════════════════ */
+function renderList(){
+  const q=(document.getElementById('srchIn').value||'').toLowerCase();
+  const c=document.getElementById('listBox');
+  const f=q?items.filter(i=>i.code.includes(q)||i.desc.toLowerCase().includes(q)):items;
+  if(!f.length){
+    c.innerHTML=`<div class="empty"><div class="ico">📋</div><p>${q?'Nenhum resultado para "'+q+'"':'Nenhum item contado ainda.'}</p></div>`;
+    return;
+  }
+  c.innerHTML=`<table class="ltable"><thead><tr>
+    <th>Código / Descrição</th><th style="text-align:right;">Qtd</th><th></th>
+  </tr></thead><tbody>${f.map(i=>`<tr>
+    <td><div class="td-code">${i.code}</div><div class="td-desc">${i.desc||'—'}</div></td>
+    <td class="td-qty">${fmt(i.qty)}<br><span class="td-unit">${i.unit}</span></td>
+    <td><button class="del-btn" onclick="delItem('${i.id}')">✕</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+function delItem(id){
+  items=items.filter(i=>String(i.id)!==String(id));
+  saveItems(); refreshAll(); renderList();
+  toast('Item removido','info');
+}
+
+function clearAll(){
+  if(!items.length){ toast('Nenhum item para limpar','info'); return; }
+  modal('Limpar toda a contagem?',
+    `Remove todos os ${items.length} itens contados.\nEsta ação não pode ser desfeita!`,
+    [{label:'Cancelar',cls:'btn-gray',fn:closeModal},
+     {label:'🗑 Limpar tudo',cls:'btn-danger',fn:()=>{
+       items=[]; saveItems(); refreshAll(); renderList(); closeModal();
+       toast('Contagem limpa','info');
+     }}]);
+}
+
+/* ════════════════════════════════════════════
+   STATS / REFRESH
+════════════════════════════════════════════ */
+function refreshAll(){ refreshBadge(); refreshStats(); renderRecent(); }
+
+function refreshStats(){
+  const tot=items.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('stCod').textContent=items.length;
+  document.getElementById('stTot').textContent=fmt(tot);
+  refreshBadge();
+}
+
+function refreshBadge(){
+  document.getElementById('hdrBadge').textContent=items.length+(items.length===1?' item':' itens');
+}
+
+function refreshExport(){
+  const tot=items.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('expCod').textContent=items.length;
+  document.getElementById('expTot').textContent=fmt(tot);
+}
+
+function fmt(n){ return n%1===0?n:n.toFixed(3).replace(/\.?0+$/,''); }
+
+/* ════════════════════════════════════════════
+   EXPORT
+════════════════════════════════════════════ */
+function exportar(){
+  if(!items.length){ toast('Nenhum item para exportar','err'); return; }
+  const dep = document.getElementById('depIn').value;
+  const fn  = document.getElementById('fnIn').value||'Contagem_3100';
+  const now = new Date();
+  const ds  = `${p2(now.getDate())}${p2(now.getMonth()+1)}${now.getFullYear()}_${p2(now.getHours())}${p2(now.getMinutes())}`;
+
+  const sorted=[...items].sort((a,b)=>a.code.localeCompare(b.code));
+  const data=sorted.map(i=>({
+    'Código SAP': i.code,
+    'Descrição':  i.desc||'',
+    'Unidade':    i.unit||'',
+    'Quantidade': i.qty,
+    'Depósito':   dep,
+    'Data/Hora':  new Date(i.ts).toLocaleString('pt-BR')
+  }));
+
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[{wch:14},{wch:48},{wch:8},{wch:12},{wch:12},{wch:22}];
+
+  // Style header row bold (xlsx basic)
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const addr=XLSX.utils.encode_cell({r:0,c});
+    if(!ws[addr]) continue;
+    ws[addr].s={ font:{bold:true}, fill:{fgColor:{rgb:'CC0000'}}, font:{color:{rgb:'FFFFFF'},bold:true} };
+  }
+
+  XLSX.utils.book_append_sheet(wb,ws,'Contagem 3100');
+
+  const tot=items.reduce((s,i)=>s+i.qty,0);
+  const sumWs=XLSX.utils.aoa_to_sheet([
+    ['Relatório de Contagem – Almoxarifado 3100'],[''],
+    ['Depósito',dep],
+    ['Data/Hora',now.toLocaleString('pt-BR')],
+    ['Total de códigos',items.length],
+    ['Total de itens',tot],
+    ['Exportado por','App ALX 3100 – priscilabaad.github.io/estoque-3100'],
+  ]);
+  XLSX.utils.book_append_sheet(wb,sumWs,'Resumo');
+
+  XLSX.writeFile(wb,`${fn}_${ds}.xlsx`);
+  toast('✅ Exportado com sucesso!','ok');
+}
+
+function p2(n){ return String(n).padStart(2,'0'); }
+
+/* ════════════════════════════════════════════
+   PERSISTENCE
+════════════════════════════════════════════ */
+function saveItems(){ try{ localStorage.setItem('alx3100_items',JSON.stringify(items)); }catch(e){} }
+
+/* ════════════════════════════════════════════
+   AUDIO / HAPTICS
+════════════════════════════════════════════ */
+function beep(){
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type='sine'; o.frequency.value=1100;
+    g.gain.setValueAtTime(.35,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.14);
+    o.start(audioCtx.currentTime); o.stop(audioCtx.currentTime+.15);
+  }catch(e){}
+}
+
+function vibrate(){ try{ if(navigator.vibrate) navigator.vibrate([80,30,40]); }catch(e){} }
+
+/* ════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════ */
+let _tt;
+function toast(msg,cls=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+cls;
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════ */
+function modal(title,body,acts){
+  document.getElementById('mdlTitle').textContent=title;
+  document.getElementById('mdlBody').textContent=body;
+  const el=document.getElementById('mdlActs'); el.innerHTML='';
+  acts.forEach(a=>{
+    const b=document.createElement('button');
+    b.className='btn '+a.cls; b.textContent=a.label;
+    b.onclick=a.fn; el.appendChild(b);
+  });
+  document.getElementById('mbk').classList.add('open');
+}
+function closeModal(){ document.getElementById('mbk').classList.remove('open'); }
+document.getElementById('mbk').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+
+/* ════════════════════════════════════════════
+   INPUT LISTENERS
+════════════════════════════════════════════ */
+document.getElementById('codeIn').addEventListener('input',function(){
+  if(this.value.length>=6) lookup(normCode(this.value.trim()));
+});
+document.getElementById('codeIn').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){ lookup(); const q=document.getElementById('qtyIn'); q.focus(); q.select(); }
+});
+document.getElementById('qtyIn').addEventListener('keydown',function(e){
+  if(e.key==='Enter') addItem();
+});
+
+/* ════════════════════════════════════════════
+   PWA – SERVICE WORKER + INSTALL BANNER (tudo inline)
+════════════════════════════════════════════ */
+let deferredPrompt = null;
+
+// Ícones embutidos
+const ICON192 = 'data:image/png;base64,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';
+const ICON512 = 'data:image/png;base64,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';
+
+// Manifest inline via Blob URL
+(function injectManifest(){
+  const manifest = {
+    name: 'Contagem ALX 3100 – FEMSA',
+    short_name: 'ALX 3100',
+    description: 'App de contagem de estoque – Almoxarifado 3100 Coca-Cola FEMSA',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#CC0000',
+    theme_color: '#CC0000',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: ICON192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: ICON512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  document.getElementById('manifest-placeholder').href = url;
+  document.getElementById('apple-icon-placeholder').href = ICON192;
+})();
+
+// Service Worker inline via Blob URL
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const swCode = `
+const CACHE = 'alx3100-v2';
+const ASSETS = ['./', './index.html'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(()=>{}));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  if(e.request.url.includes('materiais.json')) return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if(cached) return cached;
+      return fetch(e.request).then(res => {
+        if(res && res.status===200 && res.type!=='opaque'){
+          const clone=res.clone();
+          caches.open(CACHE).then(c=>c.put(e.request,clone));
+        }
+        return res;
+      }).catch(()=>cached);
+    })
+  );
+});
+`;
+    const blob = new Blob([swCode], {type:'application/javascript'});
+    const url  = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url).catch(()=>{});
+  });
+}
+
+// Android Chrome: captura o evento de instalação
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+
+// iOS: mostra instrução manual se não for standalone
+window.addEventListener('load', () => {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  if (isIOS && !isStandalone) {
+    document.getElementById('iosBanner').style.display = 'flex';
+  }
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('installBanner').style.display = 'none';
+    });
+  }
+}
+
+function dismissBanner(id) {
+  document.getElementById(id).style.display = 'none';
+}
+document.addEventListener('touchstart',function(){
+  if(!audioCtx){ try{ audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
+},{once:true,passive:true});
+</script>
+</body>
+</html>
